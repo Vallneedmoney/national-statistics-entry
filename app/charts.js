@@ -33,15 +33,15 @@ export function lineChart(series, width = 640, height = 260) {
     const v = lo + ((hi2 - lo) * i) / ticks;
     const gy = y(v);
     grid += `<line x1="${padL}" y1="${gy}" x2="${padL + w}" y2="${gy}" stroke="${GRID}" stroke-width="1"/>` +
-      `<text x="${padL - 8}" y="${gy + 4}" text-anchor="end" font-size="11" fill="${MUTED}" font-family="${FONT}">${fmt(Math.round(v * 100) / 100)}</text>`;
+      `<text x="${padL - 8}" y="${gy + 4}" text-anchor="end" font-size="13" fill="${MUTED}" font-family="${FONT}">${fmt(Math.round(v * 100) / 100)}</text>`;
   }
   const path = series.points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
   const dots = series.points.map((p, i) =>
     `<circle cx="${x(i)}" cy="${y(p[1])}" r="4" fill="#fff" stroke="${TEAL}" stroke-width="2.5"/>` +
-    `<text x="${x(i)}" y="${y(p[1]) - 10}" text-anchor="middle" font-size="11" font-weight="600" fill="${INK}" font-family="${FONT}">${fmt(p[1])}</text>`
+    `<text x="${x(i)}" y="${y(p[1]) - 10}" text-anchor="middle" font-size="13" font-weight="600" fill="${INK}" font-family="${FONT}">${fmt(p[1])}</text>`
   ).join("");
   const labels = series.points.map((p, i) =>
-    `<text x="${x(i)}" y="${height - 8}" text-anchor="middle" font-size="11" fill="${MUTED}" font-family="${FONT}">${esc(p[0])}</text>`
+    `<text x="${x(i)}" y="${height - 8}" text-anchor="middle" font-size="13" fill="${MUTED}" font-family="${FONT}">${esc(p[0])}</text>`
   ).join("");
   return `<svg viewBox="0 0 ${width} ${height}" width="100%" role="img" aria-label="${esc(series.title)}">
     ${grid}
@@ -60,8 +60,8 @@ export function barChart(title, rows, unit, width = 640) {
     const y = padT + i * rowH;
     const bw = Math.max(2, (value / max) * 62);
     const color = i === 0 ? AMBER : TEAL;
-    return `<text x="0" y="${y + 15}" font-size="13" fill="${INK}" font-family="${FONT}">${esc(label)}</text>` +
-      `<text x="100%" y="${y + 15}" text-anchor="end" font-size="13" font-weight="600" fill="${INK}" font-family="${FONT}">${fmt(value)}${unit ? " " + esc(unit) : ""}</text>` +
+    return `<text x="0" y="${y + 15}" font-size="14" fill="${INK}" font-family="${FONT}">${esc(label)}</text>` +
+      `<text x="100%" y="${y + 15}" text-anchor="end" font-size="14" font-weight="600" fill="${INK}" font-family="${FONT}">${fmt(value)}${unit ? " " + esc(unit) : ""}</text>` +
       `<rect x="0" y="${y + 20}" width="${bw}%" height="10" rx="5" fill="${color}"/>`;
   }).join("");
   return `<div class="chart-title">${esc(title)}</div>
@@ -70,7 +70,7 @@ export function barChart(title, rows, unit, width = 640) {
 
 // Vertical column chart, for a short series with a shared unit. Negative
 // values draw downward from the zero line in amber, positives upward in teal.
-export function columnChart(series, width = 640, height = 240) {
+export function columnChart(series, width = 640, height = 280) {
   const padL = 10, padR = 10, padT = 26, padB = 26;
   const w = width - padL - padR, h = height - padT - padB;
   const values = series.points.map((p) => p[1]);
@@ -89,8 +89,8 @@ export function columnChart(series, width = 640, height = 240) {
     // Negative bars hang below the zero line; their label sits just above it.
     const labelY = p[1] < 0 ? y0 - 6 : top - 6;
     return `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${color}"/>` +
-      `<text x="${(x + bw / 2).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${INK}" font-family="${FONT}">${fmt(p[1])}</text>` +
-      `<text x="${(x + bw / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle" font-size="11" fill="${MUTED}" font-family="${FONT}">${esc(p[0])}</text>`;
+      `<text x="${(x + bw / 2).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="14" font-weight="600" fill="${INK}" font-family="${FONT}">${fmt(p[1])}</text>` +
+      `<text x="${(x + bw / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle" font-size="13" fill="${MUTED}" font-family="${FONT}">${esc(p[0])}</text>`;
   }).join("");
   const zero = min < 0 ? `<line x1="${padL}" y1="${y0}" x2="${padL + w}" y2="${y0}" stroke="${MUTED}" stroke-width="1"/>` : "";
   return `<svg viewBox="0 0 ${width} ${height}" width="100%" role="img" aria-label="${esc(series.title)}">${zero}${cols}</svg>`;

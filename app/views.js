@@ -47,24 +47,16 @@ export function homeView() {
   return `
   <section class="hero">
     <p class="eyebrow">Statistik Nasional · Indonesia</p>
-    <h1>Angka resmi Indonesia,<br>dijelaskan dengan jelas.</h1>
-    <p class="lede">NusaStat mengumpulkan angka-angka utama Indonesia — penduduk, ekonomi, harga, tenaga kerja, kemiskinan, dan perdagangan — dari rilis resmi BPS dan Bank Indonesia, dengan sumber dan tahun pada setiap angka.</p>
+    <h1>Angka resmi Indonesia, dijelaskan dengan jelas.</h1>
+    <p class="lede">Angka resmi Indonesia — penduduk, ekonomi, harga, tenaga kerja, kemiskinan, dan perdagangan — dari BPS dan Bank Indonesia, dengan sumber dan tahun pada setiap angka.</p>
     <p class="hero-meta">Angka tahunan terbaru: 2024 · Diperbarui ${META.updated}</p>
   </section>
   <section class="kpi-grid" aria-label="Angka utama">${HEADLINE.map(kpi).join("")}</section>
-  <section class="grid-2">
-    <article class="card">
-      <h2>Pertumbuhan ekonomi</h2>
-      ${columnChart(SERIES.pertumbuhan)}
-      ${sourceNote(SERIES.pertumbuhan.source)}
-      <p><a href="#/topik/ekonomi">Lihat topik Ekonomi →</a></p>
-    </article>
-    <article class="card">
-      <h2>Penduduk menurut pulau</h2>
-      ${barChart(ISLANDS.title, ISLANDS.rows, "jt")}
-      ${sourceNote(ISLANDS.source)}
-      <p><a href="#/topik/penduduk">Lihat topik Penduduk →</a></p>
-    </article>
+  <section class="card chart-wide">
+    <h2>Pertumbuhan ekonomi</h2>
+    <div class="chart-center">${columnChart(SERIES.pertumbuhan, 640, 240)}</div>
+    ${sourceNote(SERIES.pertumbuhan.source)}
+    <p><a href="#/topik/ekonomi">Lihat topik Ekonomi →</a></p>
   </section>
   <section>
     <h2>Jelajahi berdasarkan topik</h2>
@@ -72,7 +64,8 @@ export function homeView() {
   </section>
   <section class="grid-2">
     <article class="card">
-      <h2>Rilis terbaru</h2>
+      <h2>Rilis yang dipakai</h2>
+      <p>Rilis BPS/BI yang angkanya dipakai di situs ini.</p>
       <ul class="releases">${releases}</ul>
     </article>
     <article class="card">
@@ -86,12 +79,34 @@ export function homeView() {
   </section>`;
 }
 
+// "Apa artinya": one derived line per topic, each checked against data.js —
+// no new raw figures, only arithmetic or restatements of figures already shown.
+const INSIGHTS = {
+  penduduk: "Lebih dari separuh penduduk tinggal di Jawa — angka apa pun soal Indonesia praktis soal Jawa dulu.",
+  ekonomi: "Ekonomi tumbuh 5,03% sementara harga naik 1,57% — daya beli tumbuh, bukan sekadar angka naik.",
+  harga: "Inflasi 1,57% berada di ujung bawah rentang sasaran Bank Indonesia (1,5%–3,5%).",
+  "tenaga-kerja": "Dari 149,4 juta angkatan kerja, sekitar 59% bekerja informal — mayoritas pekerja tanpa perlindungan formal.",
+  kemiskinan: "Garis kemiskinan Rp 595 ribu/kapita/bulan — bandingkan dengan upah di kotamu untuk membaca angka ini.",
+  perdagangan: "Surplus US$ 31,0 miliar selama lima tahun berturut-turut — ekspor masih ditopang batu bara dan minyak sawit.",
+};
+
 export function topicView(id) {
   const t = TOPICS.find((x) => x.id === id);
   if (!t) return `<section class="card"><h1>Topik tidak ditemukan</h1><p><a href="#/">Kembali ke Beranda</a></p></section>`;
-  let chart = "";
-  if (t.chart === "islands") chart = barChart(ISLANDS.title, ISLANDS.rows, "jt") + sourceNote(ISLANDS.source);
-  else if (SERIES[t.chart]) chart = columnChart(SERIES[t.chart]) + sourceNote(SERIES[t.chart].source);
+  let charts = "";
+  if (id === "ekonomi") {
+    charts = `<section class="topic-charts">
+      <article class="card"><h2>Pertumbuhan ekonomi</h2>${columnChart(SERIES.pertumbuhan, 640, 280)}${sourceNote(SERIES.pertumbuhan.source)}</article>
+      <article class="card">${sectorsChart()}</article>
+    </section>`;
+  } else {
+    let chart = "";
+    if (t.chart === "islands") chart = barChart(ISLANDS.title, ISLANDS.rows, "jt") + sourceNote(ISLANDS.source);
+    else if (SERIES[t.chart]) chart = columnChart(SERIES[t.chart], 640, 280) + sourceNote(SERIES[t.chart].source);
+    charts = `<section class="topic-charts single">
+      <article class="card"><h2>Grafik</h2>${chart}</article>
+    </section>`;
+  }
   const others = TOPICS.filter((x) => x.id !== id).map((x) =>
     `<a href="#/topik/${x.id}">${x.name}</a>`).join(" · ");
   return `
@@ -100,10 +115,9 @@ export function topicView(id) {
     <h1>${t.name}</h1>
     <p class="lede">${t.blurb}</p>
   </section>
-  <section class="grid-2">
-    <article class="card"><h2>Angka-angka utama</h2>${indicatorTable(t.rows)}</article>
-    <article class="card"><h2>Grafik</h2>${chart}<p class="note">${t.note}</p></article>
-  </section>
+  ${charts}
+  <section class="card"><h2>Apa artinya</h2><p class="insight">${t.note} ${INSIGHTS[id] ?? ""}</p></section>
+  <section class="card"><h2>Angka-angka utama</h2>${indicatorTable(t.rows)}</section>
   <section><p class="topic-nav">Topik lain: ${others}</p></section>`;
 }
 
@@ -122,13 +136,15 @@ function sortedProvinces() {
   return list;
 }
 
+const MAX_POP = Math.max(...PROVINCES.map((p) => p.pop));
+
 function provinceRows() {
   return sortedProvinces().map((p) =>
     `<tr>
       <td><a href="#/bandingkan/${encodeURIComponent(p.name)}">${p.name}</a></td>
       <td>${p.island}</td>
       <td class="num">${fmtID(p.pop)}</td>
-      <td class="num">${fmtID(shareOf(p.pop))}%</td>
+      <td class="num">${fmtID(shareOf(p.pop))}%<div class="prov-bar"><div style="width:${(p.pop / MAX_POP * 100).toFixed(1)}%"></div></div></td>
       <td><a class="mini-link" href="#/bandingkan/${encodeURIComponent(p.name)}">Bandingkan →</a></td>
     </tr>`
   ).join("");
@@ -139,11 +155,16 @@ export function regionsView() {
   const islands = ["Semua", ...new Set(PROVINCES.map((p) => p.island))];
   const options = islands.map((i) => `<option${i === islandFilter ? " selected" : ""}>${i}</option>`).join("");
   const arrow = (key) => (sortKey === key ? (sortDir === 1 ? " ▲" : " ▼") : "");
+  const top5 = [...PROVINCES].sort((a, b) => b.pop - a.pop).slice(0, 5).map((p) => [p.name, p.pop]);
   return `
   <section>
     <p class="eyebrow"><a href="#/">Beranda</a> / Provinsi</p>
     <h1>Provinsi</h1>
     <p class="lede">Penduduk 38 provinsi Indonesia, estimasi pertengahan 2024 (BPS, dibulatkan ke 0,1 juta jiwa). Klik nama provinsi untuk membandingkannya dengan provinsi lain.</p>
+  </section>
+  <section class="card">
+    ${barChart("5 provinsi terbanyak penduduknya", top5, "jt")}
+    ${sourceNote("BPS, estimasi pertengahan 2024.")}
   </section>
   <section class="card">
     <div class="toolbar">
